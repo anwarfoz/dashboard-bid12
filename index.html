@@ -62,6 +62,7 @@ body{font-family:var(--font-family,'Segoe UI',system-ui,sans-serif);background:v
 .card{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--rad);padding:14px 16px;margin-bottom:14px}
 .chl{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px}
 .ct{font-size:13px;font-weight:600;color:var(--tx)}.cs{font-size:11px;color:var(--txh);margin-top:2px}
+.g5{display:grid;grid-template-columns:repeat(5,1fr);gap:11px;margin-bottom:14px}
 .g4{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-bottom:14px}
 .g2{display:grid;grid-template-columns:repeat(2,1fr);gap:13px;margin-bottom:14px}
 .g3{display:grid;grid-template-columns:repeat(3,1fr);gap:13px;margin-bottom:14px}
@@ -186,7 +187,7 @@ textarea{resize:vertical;min-height:72px}
 .gauge-canvas-wrapper { position: relative; height: 110px; width:100%; display:flex; justify-content:center}
 .gauge-text { position: absolute; bottom: 8px; left: 0; right: 0; font-size: 24px; font-weight: 800; color: var(--tx); }
 .gauge-subtext { position: absolute; bottom: -8px; left: 0; right: 0; font-size: 10px; font-weight: 500; color: var(--tx2); }
-@media(max-width:900px){.g4{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:repeat(2,1fr)}.fr{grid-template-columns:1fr}}
+@media(max-width:900px){.g5{grid-template-columns:repeat(2,1fr)}.g4{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:repeat(2,1fr)}.fr{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -253,8 +254,9 @@ textarea{resize:vertical;min-height:72px}
         </div>
         <span id="btab-label" style="font-size:11px;color:var(--txh)"></span>
       </div>
-      <div class="g4">
-        <div class="mc" style="background:#8b5cf6;border:none"><div class="ml" id="sc-l1" style="color:rgba(255,255,255,0.9)">Program Kerja</div><div class="mv" id="sc-v1" style="color:#ffffff">--</div><div class="ms" style="color:rgba(255,255,255,0.8)">Total program utama</div></div>
+      <div class="g5">
+        <div class="mc" style="background:#8b5cf6;border:none"><div class="ml" id="sc-l1" style="color:rgba(255,255,255,0.9)">Program Utama</div><div class="mv" id="sc-v1" style="color:#ffffff">--</div><div class="ms" style="color:rgba(255,255,255,0.8)">Total program utama</div></div>
+        <div class="mc" style="background:#06b6d4;border:none"><div class="ml" style="color:rgba(255,255,255,0.9)">Program Turunan</div><div class="mv" id="sc-v-tur" style="color:#ffffff">--</div><div class="ms" style="color:rgba(255,255,255,0.8)">Total turunan (Sub)</div></div>
         <div class="mc" style="background:#3b82f6;border:none"><div class="ml" id="sc-l2" style="color:rgba(255,255,255,0.9)">Aktivitas Tercatat</div><div class="mv" id="sc-v2" style="color:#ffffff">--</div><div class="ms" style="color:rgba(255,255,255,0.8)">Dari semua turunan</div></div>
         <div class="mc" style="background:#10b981;border:none"><div class="ml" style="color:rgba(255,255,255,0.9)">Sudah Terlaksana</div><div class="mv" id="sc-done" style="color:#ffffff">--</div><div class="mtr" style="background:#ffffff;color:#10b981"><i class="fa-solid fa-arrow-up"></i><span id="sc-pct">--</span></div></div>
         <div class="mc" style="background:#f59e0b;border:none"><div class="ml" style="color:rgba(255,255,255,0.9)">Belum / Perlu Tindak</div><div class="mv" id="sc-pend" style="color:#ffffff">--</div><div class="mtr" style="background:#ffffff;color:#f59e0b"><i class="fa-solid fa-clock"></i><span id="sc-ppct">--</span></div></div>
@@ -1146,8 +1148,9 @@ function updateBerandaStats(){
   const b1=statsFor(PD),b2=statsFor(PD2),all=statsFor([...PD,...PD2]);
   const src=_btab==='b1'?b1:_btab==='b2'?b2:all;
   const srcPD=_btab==='b1'?PD:_btab==='b2'?PD2:[...PD,...PD2];
-  sEl('sc-l1',_btab==='all'?'Total Program Kerja':_btab==='b1'?'Proker Bidang 1':'Proker Bidang 2');
-  sEl('sc-v1',srcPD.length); sEl('sc-v2',src.tot);
+  sEl('sc-l1',_btab==='all'?'Program Utama':_btab==='b1'?'Program Utama B1':'Program Utama B2');
+  let turCnt=0; srcPD.forEach(p=>turCnt+=(p.turunan?p.turunan.length:0));
+  sEl('sc-v1',srcPD.length); sEl('sc-v-tur',turCnt); sEl('sc-v2',src.tot);
   sEl('sc-done',src.dn); sEl('sc-pend',src.tot-src.dn);
   sEl('sc-pct',src.tot?Math.round(src.dn/src.tot*100)+'%':'-');
   sEl('sc-ppct',src.tot?Math.round((src.tot-src.dn)/src.tot*100)+'%':'-');
