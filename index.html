@@ -1414,12 +1414,21 @@ function updRCS(bid,i,st){
 function togRCT(bid,ri,ti){RD[bid][ri].tasks[ti].done=!RD[bid][ri].tasks[ti].done;renderRC();updRCPrev();}
 function rcsbtns(st,bid,i){return[['todo','Belum','bt'],['ongoing','Berjalan','bo'],['done','Selesai','bd']].map(([v,lb,cls])=>`<button class="rcsbtn badge ${cls}" style="opacity:${st===v?1:.4}" onclick="updRCS('${bid}',${i},'${v}')">${lb}</button>`).join('');}
 
+function getActiveRC(bid) {
+  return RD[bid].filter(r => {
+    let d = r.end || r.start || pekanEnd;
+    if (r.status === 'done') return d >= pekanStart && d <= pekanEnd;
+    return d <= pekanEnd;
+  });
+}
+
 function renderRC(){
   ['b1','b2'].forEach(b=>{
     const el=document.getElementById('rcb'+b.slice(-1)),col=b==='b1'?'t':'b';
     if(!el)return;
-    if(!RD[b].length){el.innerHTML=`<div style="color:var(--txh);font-size:12px;text-align:center;padding:14px 0">Belum ada rencana Bidang ${b==='b1'?'1':'2'}</div>`;return;}
-    el.innerHTML=RD[b].map((r,i)=>`<div class="rc rc${b==='b1'?'1':'2'}">
+    const it = getActiveRC(b);
+    if(!it.length){el.innerHTML=`<div style="color:var(--txh);font-size:12px;text-align:center;padding:14px 0">Belum ada rencana Bidang ${b==='b1'?'1':'2'}</div>`;return;}
+    el.innerHTML=it.map((r,i)=>`<div class="rc rc${b==='b1'?'1':'2'}">
       <div class="flex ac jb"><div style="flex:1;min-width:0">
         <div class="rct" style="color:var(--${col}800)">${r.judul}</div>
         ${r.tnama?`<div class="rcp" style="color:var(--${col}600)"><i class="fa-solid fa-sitemap" style="font-size:9px;margin-right:3px"></i><strong>${r.tnama}</strong><span style="font-size:9px;opacity:.7"> \u00b7 ${r.pnama||''}</span></div>`:''}
@@ -1440,14 +1449,15 @@ function renderRC(){
 
 function updRCPrev(){
   const el=document.getElementById('rcprev');if(!el)return;
-  if(!RD.b1.length&&!RD.b2.length){el.innerHTML='<div style="color:var(--txh);font-size:12px;text-align:center;padding:16px 0"><i class="fa-regular fa-calendar-xmark" style="font-size:22px;margin-bottom:5px;display:block"></i>Belum ada rencana pekan.</div>';return;}
-  el.innerHTML='<div style="display:flex;flex-direction:column;gap:14px">'+['b1','b2'].map(b=>{const col=b==='b1'?'t':'b',it=RD[b];return`<div style="background:var(--${col}50);border:1px solid var(--${col}100);border-radius:10px;padding:14px;display:flex;flex-direction:column"><div class="xs fw6" style="color:var(--${col}800);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px;display:flex"><i class="fa-solid fa-layer-group" style="margin-right:5px;margin-top:2px"></i><div style="display:flex"><span style="white-space:nowrap;margin-right:4px">Bidang ${b==='b1'?'1 -':'2 -'}</span><span>${b==='b1'?'Pengembangan SDM':'Penguatan Kelembagaan'}</span></div></div>${it.length?it.slice(0,4).map((r,i)=>{const sb=r.status==='done'?'<span class="badge bd" style="font-size:9px">Selesai</span>':r.status==='ongoing'?'<span class="badge bo" style="font-size:9px">Berjalan</span>':'<span class="badge bt" style="font-size:9px">Belum</span>';return`<div style="padding:6px 0;border-bottom:1px dashed var(--${col}100)"><div class="flex gap8"><div style="font-size:12px;font-weight:700;color:var(--${col}600);width:16px;text-align:center;flex-shrink:0;margin-top:1px">${i+1}.</div><div style="flex:1"><div style="font-size:12px;font-weight:600;color:var(--tx)">${r.judul}</div>${r.tnama?`<div style="font-size:10px;color:var(--txh)">${r.tnama}</div>`:''}</div>${sb}</div></div>`;}).join(''):`<div class="xs txh" style="padding:6px 0;flex:1">Belum ada rencana pekan ini.</div>`}</div>`;}).join('')+'</div>';
+  if(!getActiveRC('b1').length&&!getActiveRC('b2').length){el.innerHTML='<div style="color:var(--txh);font-size:12px;text-align:center;padding:16px 0"><i class="fa-regular fa-calendar-xmark" style="font-size:22px;margin-bottom:5px;display:block"></i>Belum ada rencana pekan.</div>';return;}
+  el.innerHTML='<div style="display:flex;flex-direction:column;gap:14px">'+['b1','b2'].map(b=>{const col=b==='b1'?'t':'b',it=getActiveRC(b);return`<div style="background:var(--${col}50);border:1px solid var(--${col}100);border-radius:10px;padding:14px;display:flex;flex-direction:column"><div class="xs fw6" style="color:var(--${col}800);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px;display:flex"><i class="fa-solid fa-layer-group" style="margin-right:5px;margin-top:2px"></i><div style="display:flex"><span style="white-space:nowrap;margin-right:4px">Bidang ${b==='b1'?'1 -':'2 -'}</span><span>${b==='b1'?'Pengembangan SDM':'Penguatan Kelembagaan'}</span></div></div>${it.length?it.slice(0,4).map((r,i)=>{const sb=r.status==='done'?'<span class="badge bd" style="font-size:9px">Selesai</span>':r.status==='ongoing'?'<span class="badge bo" style="font-size:9px">Berjalan</span>':'<span class="badge bt" style="font-size:9px">Belum</span>';return`<div style="padding:6px 0;border-bottom:1px dashed var(--${col}100)"><div class="flex gap8"><div style="font-size:12px;font-weight:700;color:var(--${col}600);width:16px;text-align:center;flex-shrink:0;margin-top:1px">${i+1}.</div><div style="flex:1"><div style="font-size:12px;font-weight:600;color:var(--tx)">${r.judul}</div>${r.tnama?`<div style="font-size:10px;color:var(--txh)">${r.tnama}</div>`:''}</div>${sb}</div></div>`;}).join(''):`<div class="xs txh" style="padding:6px 0;flex:1">Belum ada rencana pekan ini.</div>`}</div>`;}).join('')+'</div>';
 }
 function updAHPrev(){
   const el=document.getElementById('ahprev');if(!el)return;
-  if(!AH||!AH.length){el.innerHTML='<div style="color:var(--txh);font-size:12px;text-align:center;padding:16px 0"><i class="fa-regular fa-calendar-xmark" style="font-size:22px;margin-bottom:5px;display:block"></i>Belum ada aktivitas.</div>';return;}
+  const itms = getAHItems();
+  if(!itms||!itms.length){el.innerHTML='<div style="color:var(--txh);font-size:12px;text-align:center;padding:16px 0"><i class="fa-regular fa-calendar-xmark" style="font-size:22px;margin-bottom:5px;display:block"></i>Belum ada aktivitas.</div>';return;}
   const col='p';
-  el.innerHTML='<div style="background:var(--'+col+'50);border:1px solid var(--'+col+'100);border-radius:10px;padding:14px;display:flex;flex-direction:column;height:100%"><div class="xs fw6" style="color:var(--'+col+'800);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px;display:flex"><i class="fa-solid fa-clock-rotate-left" style="margin-right:5px;margin-top:2px"></i>Aktivitas Terbaru</div>'+[...AH].reverse().slice(0,6).map((a,i)=>{const sb=a.status==='done'?'<span class="badge bd" style="font-size:9px">Selesai</span>':a.status==='ongoing'?'<span class="badge bo" style="font-size:9px">Berjalan</span>':'<span class="badge bt" style="font-size:9px">Belum</span>';return`<div style="padding:6px 0;border-bottom:1px dashed var(--'+col+'100)"><div class="flex gap8"><div style="font-size:12px;font-weight:700;color:var(--'+col+'600);width:16px;text-align:center;flex-shrink:0;margin-top:1px">${i+1}.</div><div style="flex:1"><div style="font-size:12px;font-weight:600;color:var(--tx)">${a.judul}</div><div style="font-size:10px;color:var(--txh)">${a.tgl}${a.jamS?' \u00b7 '+a.jamS:''}${a.jamE?'-'+a.jamE:''}</div></div>${sb}</div></div>`;}).join('')+'</div>';
+  el.innerHTML='<div style="background:var(--'+col+'50);border:1px solid var(--'+col+'100);border-radius:10px;padding:14px;display:flex;flex-direction:column;height:100%"><div class="xs fw6" style="color:var(--'+col+'800);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px;display:flex"><i class="fa-solid fa-clock-rotate-left" style="margin-right:5px;margin-top:2px"></i>Aktivitas Terbaru</div>'+[...itms].reverse().slice(0,6).map((a,i)=>{const sb=a.status==='done'?'<span class="badge bd" style="font-size:9px">Selesai</span>':a.status==='ongoing'?'<span class="badge bo" style="font-size:9px">Berjalan</span>':'<span class="badge bt" style="font-size:9px">Belum</span>';return`<div style="padding:6px 0;border-bottom:1px dashed var(--'+col+'100)"><div class="flex gap8"><div style="font-size:12px;font-weight:700;color:var(--'+col+'600);width:16px;text-align:center;flex-shrink:0;margin-top:1px">${i+1}.</div><div style="flex:1"><div style="font-size:12px;font-weight:600;color:var(--tx)">${a.judul}</div><div style="font-size:10px;color:var(--txh)">${a.tgl}${a.jamS?' \u00b7 '+a.jamS:''}${a.jamE?'-'+a.jamE:''}</div></div>${sb}</div></div>`;}).join('')+'</div>';
 }
 // ================================================================
 // AKTIVITAS HARIAN
@@ -1548,8 +1558,14 @@ function delAH(i){AH.splice(i,1);renderAH();document.getElementById('nba-count')
 function clearAHF(){['ah-fbid','ah-fst','ah-fdate'].forEach(id=>document.getElementById(id).value='');renderAH();}
 
 function getAHItems(){
-  // Hanya tampilkan aktivitas harian yang diinput manual
-  return [...AH];
+  const fDate=document.getElementById('ah-fdate')?document.getElementById('ah-fdate').value:'';
+  let items=[...AH];
+  if(fDate) return items; // Kalau difilter tanggal spesifik, munculkan sesuai filter
+  
+  return items.filter(a => {
+    if(a.status==='done') return a.tgl>=pekanStart && a.tgl<=pekanEnd; // 4. kalau selesai, hilang jika sudah lewat pekan
+    return a.tgl<=pekanEnd; // 3. jika berjalan/belum selesai pekan sebelumnya, masuk pekan depan
+  });
 }
 
 function openAHFromRp(rid) {
