@@ -1473,8 +1473,10 @@ function onAHSrcChange(){
   const jd=document.getElementById('mah-jd');
   if(src.startsWith('rc:')){
     const rid=parseInt(src.slice(3));
-    const r=[...RD.b1,...RD.b2].find(x=>x.id===rid);
-    if(r){jd.value=r.judul;document.getElementById('mah-bid').value=r.bid;}
+    let r=RD.b1.find(x=>x.id===rid);
+    let fBid='b1';
+    if(!r){r=RD.b2.find(x=>x.id===rid);fBid='b2';}
+    if(r){jd.value=r.judul;document.getElementById('mah-bid').value=fBid;}
   }else if(src.startsWith('tu:')){
     const tid=src.slice(3);
     let found=null,fBid='b1';
@@ -1544,9 +1546,14 @@ function saveAH(){
     }else toast('Aktivitas disimpan');
   }else if(srcVal.startsWith('rc:')){
     const rid=parseInt(srcVal.slice(3));
-    const r=[...RD.b1,...RD.b2].find(x=>x.id===rid);
+    let r=RD.b1.find(x=>x.id===rid);
+    if(!r) r=RD.b2.find(x=>x.id===rid);
     if(r){
       r.status=item.status;
+      if(r.puid&&r.tuid){
+        const ttgl=r.end||r.start||new Date().toLocaleDateString('id-ID');
+        autoUpdTurunan(r.puid,r.tuid,item.status,r.judul,ttgl);
+      }
       renderRC();
       updRCPrev();
       refreshAll();
