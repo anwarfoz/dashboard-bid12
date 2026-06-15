@@ -385,6 +385,7 @@ textarea{resize:vertical;min-height:72px}
           </div>
         </div>
       </div>
+      <div id="ah-rp-list" style="margin-bottom:14px;display:flex;gap:8px;flex-wrap:wrap"></div>
       <div class="card" style="padding:10px 16px;margin-bottom:14px">
         <div class="flex ac gap8">
           <span class="xs txh fw6">Filter:</span>
@@ -1531,8 +1532,28 @@ function getAHItems(){
   return [...AH];
 }
 
+function openAHFromRp(rid) {
+  openAHModal();
+  setTimeout(() => {
+    const srcSel = document.getElementById('mah-src');
+    if(srcSel) { srcSel.value = 'rc:' + rid; onAHSrcChange(); }
+  }, 10);
+}
+
 function renderAH(){
   const el=document.getElementById('ah-content');if(!el)return;
+  const rpListEl = document.getElementById('ah-rp-list');
+  if(rpListEl) {
+    let rphtml = '';
+    const activeRp = [...RD.b1, ...RD.b2].filter(r => r.status !== 'done');
+    if(activeRp.length > 0) {
+      rphtml += `<div style="width:100%;font-size:12px;font-weight:600;color:var(--tx2);margin-bottom:4px">Rencana Pekan yang belum selesai (Klik untuk jadikan aktivitas):</div>`;
+      activeRp.forEach(r => {
+        rphtml += `<div class="badge bpl" style="cursor:pointer;padding:6px 10px;font-size:11px;border:1px solid var(--bdr);color:var(--t600);background:var(--t50);transition:background .2s" onmouseover="this.style.background='var(--t100)'" onmouseout="this.style.background='var(--t50)'" onclick="openAHFromRp(${r.id})"><i class="fa-solid fa-plus" style="margin-right:4px"></i> ${r.judul}</div>`;
+      });
+    }
+    rpListEl.innerHTML = rphtml;
+  }
   const fBid=document.getElementById('ah-fbid').value;
   const fSt=document.getElementById('ah-fst').value;
   const fDate=document.getElementById('ah-fdate').value;
@@ -1600,7 +1621,7 @@ function onNpPuChange(){
     const p=(bid==='b2'?PD2:PD).find(x=>x.id===v);
     const s=document.getElementById('np-tu');
     s.innerHTML='<option value="">-- Pilih --</option><option value="__new__">+ Tambah Baru</option>';
-    if(p)p.turunan.forEach(t=>{const o=document.createElement('option');o.value=t.id;o.textContent=t.nama;s.appendChild(o);});
+    if(p)p.turunan.forEach(t=>{addTuOption(s,t);});
   }
   onNpTuChange();
 }
@@ -1617,19 +1638,7 @@ function buildUpTu(){
   const s=document.getElementById('up-tu');
   s.innerHTML='<option value="">-- Pilih --</option><option value="__new__">+ Tambah Baru</option>';
   const p=[...PD,...PD2].find(x=>x.id===pid);
-  if(p)p.turunan.forEach(t=>{
-    const o=document.createElement('option');
-    o.value=t.id;
-    if(t.status==='done'){
-      o.textContent='✓ [SELESAI] '+t.nama;
-      o.style.color='#1D9E75';
-      o.style.fontWeight='bold';
-      o.style.background='#e1f5ee';
-    }else{
-      o.textContent=t.nama;
-    }
-    s.appendChild(o);
-  });
+  if(p)p.turunan.forEach(t=>{addTuOption(s,t);});
   onUpTuChange();
 }
 function onUpTuChange(){
