@@ -1520,7 +1520,12 @@ function saveAH(){
   }else if(srcVal.startsWith('rc:')){
     const rid=parseInt(srcVal.slice(3));
     const r=[...RD.b1,...RD.b2].find(x=>x.id===rid);
-    if(r){r.status=item.status;renderRC();}
+    if(r){
+      r.status=item.status;
+      renderRC();
+      updRCPrev();
+      refreshAll();
+    }
     toast('Aktivitas disimpan & rencana diperbarui!');
   }else toast('Aktivitas disimpan');
 }
