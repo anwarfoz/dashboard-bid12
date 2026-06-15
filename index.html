@@ -796,7 +796,7 @@ textarea{resize:vertical;min-height:72px}
   <div class="modal">
     <div class="mtit"><span id="mah-title">Tambah Aktivitas Harian</span><button class="mcls" onclick="CM('mah')"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="fg"><label>Bidang</label><select id="mah-bid"><option value="b1">Bidang 1 - SDM</option><option value="b2">Bidang 2 - Kelembagaan</option></select></div>
-    <div class="fg"><label>Sumber</label><select id="mah-src"><option value="manual">-- Tambah Mandiri --</option></select></div>
+    <div class="fg"><label>Sumber</label><select id="mah-src" onchange="onAHSrcChange()"><option value="manual">-- Tambah Mandiri --</option></select></div>
     <div class="fg"><label>Judul Aktivitas <span style="color:var(--r400)">*</span></label><input type="text" id="mah-jd" placeholder="Nama aktivitas..."></div>
     <div class="fg"><label>Tanggal <span style="color:var(--r400)">*</span></label><input type="date" id="mah-tgl"></div>
     <div class="fg"><label>Waktu</label><div class="fr"><input type="text" id="mah-jam-s" placeholder="Mulai (08:00)"><input type="text" id="mah-jam-e" placeholder="Selesai (10:00)"></div></div>
@@ -1442,6 +1442,23 @@ function buildAHSrcDrop(){
   [...RD.b1,...RD.b2].forEach(r=>{const o=document.createElement('option');o.value='rc:'+r.id;const lbl=r.tnama?`${r.judul} [${r.tnama}]`:r.pnama?`${r.judul} [${r.pnama}]`:r.judul;o.textContent=(r.bid==='b1'?'B1: ':'B2: ')+lbl;s.appendChild(o);});
   [...PD,...PD2].forEach(p=>{p.turunan.forEach(t=>{const o=document.createElement('option');o.value='tu:'+t.id;o.textContent='Turunan: '+t.nama+' ['+p.nama+']';s.appendChild(o);});});
 }
+function onAHSrcChange(){
+  const src=document.getElementById('mah-src').value;
+  const jd=document.getElementById('mah-jd');
+  if(src.startsWith('rc:')){
+    const rid=parseInt(src.slice(3));
+    const r=[...RD.b1,...RD.b2].find(x=>x.id===rid);
+    if(r){jd.value=r.judul;document.getElementById('mah-bid').value=r.bid;}
+  }else if(src.startsWith('tu:')){
+    const tid=src.slice(3);
+    let found=null,fBid='b1';
+    PD.forEach(p=>p.turunan.forEach(t=>{if(t.id===tid){found=t;fBid='b1';}}));
+    if(!found)PD2.forEach(p=>p.turunan.forEach(t=>{if(t.id===tid){found=t;fBid='b2';}}));
+    if(found){jd.value=found.nama;document.getElementById('mah-bid').value=fBid;}
+  }else{
+    jd.value='';
+  }
+}
 function openAHModal(ei=-1){
   buildAHSrcDrop();
   document.getElementById('mah-ei').value=ei;
@@ -1600,7 +1617,19 @@ function buildUpTu(){
   const s=document.getElementById('up-tu');
   s.innerHTML='<option value="">-- Pilih --</option><option value="__new__">+ Tambah Baru</option>';
   const p=[...PD,...PD2].find(x=>x.id===pid);
-  if(p)p.turunan.forEach(t=>{const o=document.createElement('option');o.value=t.id;o.textContent=t.nama;s.appendChild(o);});
+  if(p)p.turunan.forEach(t=>{
+    const o=document.createElement('option');
+    o.value=t.id;
+    if(t.status==='done'){
+      o.textContent='✓ [SELESAI] '+t.nama;
+      o.style.color='#1D9E75';
+      o.style.fontWeight='bold';
+      o.style.background='#e1f5ee';
+    }else{
+      o.textContent=t.nama;
+    }
+    s.appendChild(o);
+  });
   onUpTuChange();
 }
 function onUpTuChange(){
@@ -1705,15 +1734,18 @@ function refreshAll(){
 function admGetPD(){return document.getElementById('pk-bid-sel')&&document.getElementById('pk-bid-sel').value==='b2'?PD2:PD;}
 function admGetBid(){const el=document.getElementById('pk-bid-sel');return el?el.value:'b1';}
 
+let _openPKBlocks=new Set();
+let _openTUAkt=new Set();
 function renderAdmPK(){
   const pdSet=admGetPD(),bid=admGetBid(),clr=bid==='b1'?'t':'b';
   const el=document.getElementById('adm-pk-list');if(!el)return;
   if(!pdSet.length){el.innerHTML='<div class="txh xs" style="padding:10px 0">Belum ada program kerja.</div>';return;}
   let h='';
   pdSet.forEach((p,pi)=>{
+    const isOpen=_openPKBlocks.has(p.id);
     h+=`<div class="pk-block" id="pkb-${p.id}">
       <div class="pk-head" onclick="togPKBlock('${p.id}')">
-        <i class="fa-solid fa-chevron-right" id="pkarr-${p.id}" style="font-size:10px;color:var(--txh);transition:transform .2s"></i>
+        <i class="fa-solid fa-chevron-right" id="pkarr-${p.id}" style="font-size:10px;color:var(--txh);transition:transform .2s;transform:${isOpen?'rotate(90deg)':'rotate(0deg)'}"></i>
         <div style="flex:1">
           <span style="font-size:12.5px;font-weight:600;color:var(--${clr}800)" id="pkn-disp-${p.id}">${p.nama}</span>
           <span class="xs txh" style="margin-left:8px">${p.turunan.length} turunan</span>
@@ -1723,7 +1755,7 @@ function renderAdmPK(){
           <button class="btn bts btD" style="padding:2px 7px" onclick="admDelPK('${p.id}')"><i class="fa-solid fa-trash"></i></button>
         </div>
       </div>
-      <div class="pk-body" id="pkbody-${p.id}" style="display:none">`;
+      <div class="pk-body" id="pkbody-${p.id}" style="display:${isOpen?'block':'none'}">`;
     // Edit name inline
     h+=`<div class="flex gap6 ac mb8" id="pkedit-${p.id}" style="display:none">
       <input type="text" id="pkname-inp-${p.id}" value="${esc(p.nama)}" style="flex:1">
@@ -1748,7 +1780,7 @@ function renderAdmPK(){
               <button class="btn bts" style="padding:2px 7px" onclick="admCancelTUEdit('${t.id}')"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <!-- Aktivitas sub-rows -->
-            <div id="akt-sub-${t.id}" style="display:none;margin-top:6px">`;
+            <div id="akt-sub-${t.id}" style="display:${_openTUAkt.has(t.id)?'block':'none'};margin-top:6px">`;
         if(t.aktivitas.length){
           t.aktivitas.forEach((a,ai)=>{
             h+=`<div class="akt-row" id="aktr-${t.id}-${ai}">
@@ -1798,6 +1830,7 @@ function togPKBlock(pid){
   const open=body.style.display==='none';
   body.style.display=open?'block':'none';
   if(arr)arr.style.transform=open?'rotate(90deg)':'rotate(0deg)';
+  if(open)_openPKBlocks.add(pid);else _openPKBlocks.delete(pid);
 }
 
 function admEditPK(pid){
@@ -1878,13 +1911,16 @@ function admAddTU(pid){
   document.getElementById('newtu-nama-'+pid).value='';
   document.getElementById('newtu-tl-'+pid).value='';
   updateAllAfterPKChange();
+  _openPKBlocks.add(pid);
   renderAdmPK();
   toast('Program turunan ditambahkan!');
 }
 
 function admTogAktSub(tid){
   const el=document.getElementById('akt-sub-'+tid);if(!el)return;
-  el.style.display=el.style.display==='none'?'block':'none';
+  const open=el.style.display==='none';
+  el.style.display=open?'block':'none';
+  if(open)_openTUAkt.add(tid);else _openTUAkt.delete(tid);
 }
 function admEditAkt(pid,tid,ai){
   // Inline edit aktivitas
@@ -1927,6 +1963,7 @@ function admAddAkt(pid,tid){
   t.aktivitas.push({nama:nm,status:st,terlaksana:st==='done'?new Date().toLocaleDateString('id-ID'):'-'});
   document.getElementById('newakt-'+tid).value='';
   updateAllAfterPKChange();
+  _openPKBlocks.add(pid);_openTUAkt.add(tid);
   renderAdmPK();
   toast('Aktivitas ditambahkan!');
 }
