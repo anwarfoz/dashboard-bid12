@@ -1465,17 +1465,25 @@ function updAHPrev(){
 function buildAHSrcDrop(){
   const s=document.getElementById('mah-src');if(!s)return;
   s.innerHTML='<option value="manual">-- Tambah Mandiri --</option>';
-  [...RD.b1,...RD.b2].forEach(r=>{const o=document.createElement('option');o.value='rc:'+r.id;const lbl=r.tnama?`${r.judul} [${r.tnama}]`:r.pnama?`${r.judul} [${r.pnama}]`:r.judul;o.textContent=(r.bid==='b1'?'B1: ':'B2: ')+lbl;s.appendChild(o);});
+  [...RD.b1,...RD.b2].forEach(r=>{const o=document.createElement('option');o.value='rc:'+(r.bid||'b1')+'_'+r.id;const lbl=r.tnama?`${r.judul} [${r.tnama}]`:r.pnama?`${r.judul} [${r.pnama}]`:r.judul;o.textContent=(r.bid==='b1'?'B1: ':'B2: ')+lbl;s.appendChild(o);});
   [...PD,...PD2].forEach(p=>{p.turunan.forEach(t=>{const o=document.createElement('option');o.value='tu:'+t.id;o.textContent='Turunan: '+t.nama+' ['+p.nama+']';s.appendChild(o);});});
 }
 function onAHSrcChange(){
   const src=document.getElementById('mah-src').value;
   const jd=document.getElementById('mah-jd');
   if(src.startsWith('rc:')){
-    const rid=parseInt(src.slice(3));
-    let r=RD.b1.find(x=>x.id===rid);
-    let fBid='b1';
-    if(!r){r=RD.b2.find(x=>x.id===rid);fBid='b2';}
+    let r, fBid;
+    if(src.includes('_')){
+      const parts = src.slice(3).split('_');
+      fBid = parts[0];
+      const rid = parseInt(parts[1]);
+      r = RD[fBid] ? RD[fBid].find(x=>x.id===rid) : null;
+    }else{
+      const rid=parseInt(src.slice(3));
+      r=RD.b1.find(x=>x.id===rid);
+      fBid='b1';
+      if(!r){r=RD.b2.find(x=>x.id===rid);fBid='b2';}
+    }
     if(r){jd.value=r.judul;document.getElementById('mah-bid').value=fBid;}
   }else if(src.startsWith('tu:')){
     const tid=src.slice(3);
@@ -1500,7 +1508,17 @@ function openAHModal(ei=-1){
     document.getElementById('mah-st').value=a.status;
     document.getElementById('mah-cat').value=a.catatan||'';
     document.getElementById('mah-bid').value=a.bid;
-    document.getElementById('mah-src').value=a.srcVal||'manual';
+    let sVal = a.srcVal || 'manual';
+    if(sVal.startsWith('rc:') && !sVal.includes('_')) {
+       const rid = parseInt(sVal.slice(3));
+       let r = RD.b1.find(x=>x.id===rid);
+       if(r) sVal = 'rc:b1_' + rid;
+       else {
+         r = RD.b2.find(x=>x.id===rid);
+         if(r) sVal = 'rc:b2_' + rid;
+       }
+    }
+    document.getElementById('mah-src').value=sVal;
   }else{
     document.getElementById('mah-title').textContent='Tambah Aktivitas Harian';
     ['mah-jd','mah-jam-s','mah-jam-e','mah-cat'].forEach(x=>document.getElementById(x).value='');
@@ -1545,9 +1563,17 @@ function saveAH(){
       else toast('Aktivitas disimpan');
     }else toast('Aktivitas disimpan');
   }else if(srcVal.startsWith('rc:')){
-    const rid=parseInt(srcVal.slice(3));
-    let r=RD.b1.find(x=>x.id===rid);
-    if(!r) r=RD.b2.find(x=>x.id===rid);
+    let r;
+    if(srcVal.includes('_')){
+      const parts = srcVal.slice(3).split('_');
+      const bid = parts[0];
+      const rid = parseInt(parts[1]);
+      r = RD[bid] ? RD[bid].find(x=>x.id===rid) : null;
+    }else{
+      const rid=parseInt(srcVal.slice(3));
+      r=RD.b1.find(x=>x.id===rid);
+      if(!r) r=RD.b2.find(x=>x.id===rid);
+    }
     if(r){
       r.status=item.status;
       if(r.puid&&r.tuid){
@@ -1575,11 +1601,11 @@ function getAHItems(){
   });
 }
 
-function openAHFromRp(rid) {
+function openAHFromRp(ridStr) {
   openAHModal();
   setTimeout(() => {
     const srcSel = document.getElementById('mah-src');
-    if(srcSel) { srcSel.value = 'rc:' + rid; onAHSrcChange(); }
+    if(srcSel) { srcSel.value = 'rc:' + ridStr; onAHSrcChange(); }
   }, 10);
 }
 
@@ -1593,7 +1619,7 @@ function renderAH(){
     if(activeRp.length > 0) {
       rphtml += `<div style="width:100%;font-size:12px;font-weight:600;color:var(--tx2);margin-bottom:4px">Rencana Pekan yang belum selesai (Klik untuk jadikan aktivitas):</div>`;
       activeRp.forEach(r => {
-        rphtml += `<div class="badge bpl" style="cursor:pointer;padding:6px 10px;font-size:11px;border:1px solid var(--bdr);color:var(--t600);background:var(--t50);transition:background .2s" onmouseover="this.style.background='var(--t100)'" onmouseout="this.style.background='var(--t50)'" onclick="openAHFromRp(${r.id})"><i class="fa-solid fa-plus" style="margin-right:4px"></i> ${r.judul}</div>`;
+        rphtml += `<div class="badge bpl" style="cursor:pointer;padding:6px 10px;font-size:11px;border:1px solid var(--bdr);color:var(--t600);background:var(--t50);transition:background .2s" onmouseover="this.style.background='var(--t100)'" onmouseout="this.style.background='var(--t50)'" onclick="openAHFromRp('${(r.bid||'b1')}_${r.id}')"><i class="fa-solid fa-plus" style="margin-right:4px"></i> ${r.judul}</div>`;
       });
     }
     rpListEl.innerHTML = rphtml;
@@ -2916,6 +2942,25 @@ function loadState() {
       if(data.CHK) CHK = data.CHK;
       if(data.PGurus) PGurus = data.PGurus;
       if(data.PGurus2) PGurus2 = data.PGurus2;
+
+      // Auto-Sync Rencana Pekan dari Aktivitas Harian (Self-Heal)
+      if(RD && AH){
+        [...RD.b1, ...RD.b2].forEach(r => {
+          const rcKey = 'rc:' + (r.bid||'b1') + '_' + r.id;
+          const legacyKey = 'rc:' + r.id;
+          const relatedAH = AH.filter(a => (a.srcVal === rcKey) || (a.srcVal === legacyKey && a.bid === r.bid));
+          if (relatedAH.length > 0) {
+            const latestAH = relatedAH[relatedAH.length - 1];
+            if (r.status !== latestAH.status) {
+               r.status = latestAH.status;
+               if (r.puid && r.tuid) {
+                 const ttgl=r.end||r.start||new Date().toLocaleDateString('id-ID');
+                 autoUpdTurunan(r.puid,r.tuid,r.status,r.judul,ttgl);
+               }
+            }
+          }
+        });
+      }
     } catch(e) {
       console.error('Gagal memuat data dari localStorage', e);
     }
