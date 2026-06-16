@@ -1476,11 +1476,11 @@ function updRCPrev(){
 function updAHPrev(){
   const el=document.getElementById('ahprev');if(!el)return;
   try {
-    const itms = getAHItems();
-    if(!itms||!itms.length){el.innerHTML='<div style="color:var(--txh);font-size:12px;text-align:center;padding:16px 0"><i class="fa-regular fa-calendar-xmark" style="font-size:22px;margin-bottom:5px;display:block"></i>Belum ada aktivitas.</div>';return;}
+    const itms = [...AH]; // Bypass filter, show all
+    if(!itms||!itms.length){el.innerHTML='<div style="color:var(--txh);font-size:12px;text-align:center;padding:16px 0;font-weight:bold;">Belum ada aktivitas yang tersimpan.</div>';return;}
     let html = '<div style="background:var(--p50);border:1px solid var(--p100);border-radius:10px;padding:14px;">';
-    html += '<div style="color:var(--p800);font-size:11px;font-weight:700;margin-bottom:10px;text-transform:uppercase;"><i class="fa-solid fa-clock-rotate-left" style="margin-right:5px;"></i>Aktivitas Terbaru</div>';
-    const toShow = [...itms].reverse().slice(0,6);
+    html += '<div style="color:var(--p800);font-size:11px;font-weight:700;margin-bottom:10px;text-transform:uppercase;"><i class="fa-solid fa-clock-rotate-left" style="margin-right:5px;"></i>Aktivitas Terbaru (v3)</div>';
+    const toShow = itms.reverse().slice(0,6);
     toShow.forEach((a, i) => {
       if(!a) return;
       const sb=a.status==='done'?'<span class="badge bd" style="font-size:9px">Selesai</span>':a.status==='ongoing'?'<span class="badge bo" style="font-size:9px">Berjalan</span>':'<span class="badge bt" style="font-size:9px">Belum</span>';
@@ -1494,7 +1494,7 @@ function updAHPrev(){
     html += '</div>';
     el.innerHTML = html;
   } catch(e) {
-    el.innerHTML = '<div style="color:var(--r600);font-size:12px;padding:10px;border:1px solid var(--r300);background:var(--r50);border-radius:8px;">Terjadi kesalahan rendering Aktivitas: ' + e.message + '</div>';
+    el.innerHTML = '<div style="color:red;font-size:12px;padding:10px;">Error: ' + e.message + '</div>';
   }
 }
 // ================================================================
