@@ -359,14 +359,10 @@ let cloudInitialized = false;
         <div class="card"><div class="chl"><div class="ct">Rekapitulasi - Bidang 2</div></div><div id="spl-b2-detail"></div></div>
       </div>
       <!-- Rencana Preview & Widgets -->
-      <div class="g2" style="margin-top:14px">
+      <div style="margin-top:14px">
         <div class="card" style="margin-bottom:0">
           <div class="chl"><div><div class="ct">Rencana Kerja Pekan Ini</div><div class="cs" id="pekan-periode-preview"></div></div><button class="btn bts" onclick="showPage('rencana')">Lihat Semua</button></div>
           <div id="rcprev"></div>
-        </div>
-        <div class="card" style="margin-bottom:0">
-          <div class="chl"><div><div class="ct">Aktivitas Harian</div><div class="cs">aktivitas yang dilaksanakan/dikerjakan harian dalam 1 pekan</div></div><button class="btn bts" onclick="showPage('aktivitas')">Lihat Semua</button></div>
-          <div id="ahprev"></div>
         </div>
       </div>
       <div class="g2">
@@ -1473,7 +1469,7 @@ function updRCPrev(){
   const rc1 = RD.b1.filter(r=>r.status!=='done');
   const rc2 = RD.b2.filter(r=>r.status!=='done');
   if(!rc1.length&&!rc2.length){el.innerHTML='<div style="color:var(--txh);font-size:12px;text-align:center;padding:16px 0"><i class="fa-regular fa-calendar-xmark" style="font-size:22px;margin-bottom:5px;display:block"></i>Belum ada rencana pekan.</div>';return;}
-  el.innerHTML='<div style="display:flex;flex-direction:column;gap:14px">'+['b1','b2'].map(b=>{const col=b==='b1'?'t':'b',it=RD[b].filter(r=>r.status!=='done');return`<div style="background:var(--${col}50);border:1px solid var(--${col}100);border-radius:10px;padding:14px;display:flex;flex-direction:column"><div class="xs fw6" style="color:var(--${col}800);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px;display:flex"><i class="fa-solid fa-layer-group" style="margin-right:5px;margin-top:2px"></i><div style="display:flex"><span style="white-space:nowrap;margin-right:4px">Bidang ${b==='b1'?'1 -':'2 -'}</span><span>${b==='b1'?'Pengembangan SDM':'Penguatan Kelembagaan'}</span></div></div>${it.length?it.slice(0,4).map((r,i)=>{const sb=r.status==='done'?'<span class="badge bd" style="font-size:9px">Selesai</span>':r.status==='ongoing'?'<span class="badge bo" style="font-size:9px">Berjalan</span>':'<span class="badge bt" style="font-size:9px">Belum</span>';return`<div style="padding:6px 0;border-bottom:1px dashed var(--${col}100)"><div class="flex gap8"><div style="font-size:12px;font-weight:700;color:var(--${col}600);width:16px;text-align:center;flex-shrink:0;margin-top:1px">${i+1}.</div><div style="flex:1"><div style="font-size:12px;font-weight:600;color:var(--tx)">${r.judul}</div>${r.tnama?`<div style="font-size:10px;color:var(--txh)">${r.tnama}</div>`:''}</div>${sb}</div></div>`;}).join(''):`<div class="xs txh" style="padding:6px 0;flex:1">Belum ada rencana pekan ini.</div>`}</div>`;}).join('')+'</div>';
+  el.innerHTML='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;align-items:start;">'+['b1','b2'].map(b=>{const col=b==='b1'?'t':'b',it=RD[b].filter(r=>r.status!=='done');return`<div style="background:var(--${col}50);border:1px solid var(--${col}100);border-radius:10px;padding:14px;display:flex;flex-direction:column;height:100%;"><div class="xs fw6" style="color:var(--${col}800);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px;display:flex"><i class="fa-solid fa-layer-group" style="margin-right:5px;margin-top:2px"></i><div style="display:flex"><span style="white-space:nowrap;margin-right:4px">Bidang ${b==='b1'?'1 -':'2 -'}</span><span>${b==='b1'?'Pengembangan SDM':'Penguatan Kelembagaan'}</span></div></div>${it.length?it.slice(0,4).map((r,i)=>{const sb=r.status==='done'?'<span class="badge bd" style="font-size:9px">Selesai</span>':r.status==='ongoing'?'<span class="badge bo" style="font-size:9px">Berjalan</span>':'<span class="badge bt" style="font-size:9px">Belum</span>';return`<div style="padding:6px 0;border-bottom:1px dashed var(--${col}100)"><div class="flex gap8"><div style="font-size:12px;font-weight:700;color:var(--${col}600);width:16px;text-align:center;flex-shrink:0;margin-top:1px">${i+1}.</div><div style="flex:1"><div style="font-size:12px;font-weight:600;color:var(--tx)">${r.judul}</div>${r.tnama?`<div style="font-size:10px;color:var(--txh)">${r.tnama}</div>`:''}</div>${sb}</div></div>`;}).join(''):`<div class="xs txh" style="padding:6px 0;flex:1">Belum ada rencana pekan ini.</div>`}</div>`;}).join('')+'</div>';
 }
 function updAHPrev(){
   const el=document.getElementById('ahprev');if(!el)return;
