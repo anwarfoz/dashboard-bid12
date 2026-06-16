@@ -246,7 +246,7 @@ let cloudInitialized = false;
     <div class="ni" id="nav-ppt-b1" style="display:none;color:var(--b400)" onclick="exportPPT('b1')"><i class="fa-solid fa-file-powerpoint"></i> Export Laporan PPT B1</div>
     <div class="ni" id="nav-ppt-b2" style="display:none;color:var(--b400)" onclick="exportPPT('b2')"><i class="fa-solid fa-file-powerpoint"></i> Export Laporan PPT B2</div>
   </nav>
-  <div class="sb-foot"><span class="xs txh">v2.0 - 2026</span><button class="tbtn" onclick="toggleTheme()"><i class="fa-solid fa-moon"></i> Mode</button></div>
+  <div class="sb-foot"><span class="xs txh">v2.1 (Sync) - 2026</span><button class="tbtn" onclick="toggleTheme()"><i class="fa-solid fa-moon"></i> Mode</button></div>
 </aside>
 <div class="main">
   <header class="header">
@@ -1348,7 +1348,7 @@ function setDefaultPekan(){const now=new Date(),day=now.getDay(),mon=new Date(no
 // RENCANA PEKAN
 // ================================================================
 function buildMrPu(){const s=document.getElementById('mr-pu');s.innerHTML='<option value="">- Tidak terkait proker -</option>';PD.forEach(p=>{const o=document.createElement('option');o.value=p.id;o.textContent='[B1] '+p.nama;s.appendChild(o);});PD2.forEach(p=>{const o=document.createElement('option');o.value=p.id;o.textContent='[B2] '+p.nama;s.appendChild(o);});}
-function buildMrTu(){const pid=document.getElementById('mr-pu').value,s=document.getElementById('mr-tu');s.innerHTML='<option value="">- Pilih -</option>';const p=[...PD,...PD2].find(x=>x.id===pid);if(p)p.turunan.forEach(t=>{const o=document.createElement('option');o.value=t.id;o.textContent=t.nama;s.appendChild(o);});}
+function buildMrTu(){const pid=document.getElementById('mr-pu').value,s=document.getElementById('mr-tu');s.innerHTML='<option value="">- Pilih -</option>';const p=[...PD,...PD2].find(x=>x.id===pid);if(p)p.turunan.forEach(t=>{addTuOption(s,t);});}
 function buildMrAk(){
   const pid=document.getElementById('mr-pu').value, tid=document.getElementById('mr-tu').value, s=document.getElementById('mr-ak');
   if(!s) return;
@@ -1738,6 +1738,16 @@ function onNpPuChange(){
   onNpTuChange();
 }
 function onNpTuChange(){document.getElementById('np-tu-wrap').style.display=document.getElementById('np-tu').value==='__new__'?'':'none';}
+function addTuOption(s, t) {
+  const o = document.createElement('option');
+  o.value = t.id;
+  o.textContent = t.nama + (t.status === 'done' ? ' (Selesai)' : '');
+  if (t.status === 'done') {
+    o.style.color = '#10B981';
+    o.style.fontWeight = 'bold';
+  }
+  s.appendChild(o);
+}
 function buildUpPu(){
   const bid=document.getElementById('up-bid').value;
   const s=document.getElementById('up-pu');
