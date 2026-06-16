@@ -1419,8 +1419,9 @@ function saveRencana(){
   CM('mrc');renderRC();updRCPrev();buildAHSrcDrop();
   document.getElementById('nbr').textContent=RD.b1.length+RD.b2.length;
   toast(puid&&tuid?'Rencana disimpan & proker diperbarui!':'Rencana pekan disimpan!');
+  saveState();
 }
-function delRC(bid,i){RD[bid].splice(i,1);renderRC();updRCPrev();buildAHSrcDrop();}
+function delRC(bid,i){RD[bid].splice(i,1);renderRC();updRCPrev();buildAHSrcDrop();saveState();}
 function updRCS(bid,i,st){
   const r=RD[bid][i];r.status=st;
   if(r.puid&&r.tuid){
@@ -1428,9 +1429,10 @@ function updRCS(bid,i,st){
     autoUpdTurunan(r.puid,r.tuid,st,r.judul,tgl);
     if(st==='done'||st==='ongoing')refreshAll();
   }
-  renderRC();updRCPrev();
+  renderRC();updRCPrev();toast('Status Rencana diperbarui');
+  saveState();
 }
-function togRCT(bid,ri,ti){RD[bid][ri].tasks[ti].done=!RD[bid][ri].tasks[ti].done;renderRC();updRCPrev();}
+function togRCT(bid,ri,ti){RD[bid][ri].tasks[ti].done=!RD[bid][ri].tasks[ti].done;renderRC();updRCPrev();saveState();}
 function rcsbtns(st,bid,i){return[['todo','Belum','bt'],['ongoing','Berjalan','bo'],['done','Selesai','bd']].map(([v,lb,cls])=>`<button class="rcsbtn badge ${cls}" style="opacity:${st===v?1:.4}" onclick="updRCS('${bid}',${i},'${v}')">${lb}</button>`).join('');}
 
 function getActiveRC(bid) {
@@ -1556,8 +1558,16 @@ function saveAH(){
   let srcLabel='Mandiri',srcType='manual',pnama='',tnama='';
   if(srcVal.startsWith('rc:')){
     srcType='rencana';
-    const rid=parseInt(srcVal.slice(3));
-    const r=[...RD.b1,...RD.b2].find(x=>x.id===rid);
+    let r;
+    if(srcVal.includes('_')){
+      const parts = srcVal.slice(3).split('_');
+      const bid = parts[0];
+      const rid = parseInt(parts[1]);
+      r = RD[bid] ? RD[bid].find(x=>x.id===rid) : null;
+    } else {
+      const rid=parseInt(srcVal.slice(3));
+      r=[...RD.b1,...RD.b2].find(x=>x.id===rid);
+    }
     if(r){srcLabel=r.judul;pnama=r.pnama||'';tnama=r.tnama||'';}
   }else if(srcVal.startsWith('tu:')){
     srcType='turunan';
@@ -1605,8 +1615,9 @@ function saveAH(){
     }
     toast('Aktivitas disimpan & rencana diperbarui!');
   }else toast('Aktivitas disimpan');
+  saveState();
 }
-function delAH(i){AH.splice(i,1);renderAH();document.getElementById('nba-count').textContent=AH.length;}
+function delAH(i){AH.splice(i,1);renderAH();document.getElementById('nba-count').textContent=AH.length;saveState();}
 function clearAHF(){['ah-fbid','ah-fst','ah-fdate'].forEach(id=>document.getElementById(id).value='');renderAH();}
 
 function getAHItems(){
