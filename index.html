@@ -1477,8 +1477,20 @@ function updAHPrev(){
   const el=document.getElementById('ahprev');if(!el)return;
   const itms = getAHItems();
   if(!itms||!itms.length){el.innerHTML='<div style="color:var(--txh);font-size:12px;text-align:center;padding:16px 0"><i class="fa-regular fa-calendar-xmark" style="font-size:22px;margin-bottom:5px;display:block"></i>Belum ada aktivitas.</div>';return;}
-  const col='p';
-  el.innerHTML='<div style="background:var(--'+col+'50);border:1px solid var(--'+col+'100);border-radius:10px;padding:14px;display:flex;flex-direction:column;height:100%"><div class="xs fw6" style="color:var(--'+col+'800);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px;display:flex"><i class="fa-solid fa-clock-rotate-left" style="margin-right:5px;margin-top:2px"></i>Aktivitas Terbaru</div>'+[...itms].reverse().slice(0,6).map((a,i)=>{const sb=a.status==='done'?'<span class="badge bd" style="font-size:9px">Selesai</span>':a.status==='ongoing'?'<span class="badge bo" style="font-size:9px">Berjalan</span>':'<span class="badge bt" style="font-size:9px">Belum</span>';return`<div style="padding:6px 0;border-bottom:1px dashed var(--'+col+'100)"><div class="flex gap8"><div style="font-size:12px;font-weight:700;color:var(--'+col+'600);width:16px;text-align:center;flex-shrink:0;margin-top:1px">${i+1}.</div><div style="flex:1"><div style="font-size:12px;font-weight:600;color:var(--tx)">${a.judul}</div><div style="font-size:10px;color:var(--txh)">${a.tgl}${a.jamS?' \u00b7 '+a.jamS:''}${a.jamE?'-'+a.jamE:''}</div></div>${sb}</div></div>`;}).join('')+'</div>';
+  let html = '<div style="background:var(--p50);border:1px solid var(--p100);border-radius:10px;padding:14px;">';
+  html += '<div style="color:var(--p800);font-size:11px;font-weight:700;margin-bottom:10px;text-transform:uppercase;"><i class="fa-solid fa-clock-rotate-left" style="margin-right:5px;"></i>Aktivitas Terbaru</div>';
+  const toShow = [...itms].reverse().slice(0,6);
+  toShow.forEach((a, i) => {
+    const sb=a.status==='done'?'<span class="badge bd" style="font-size:9px">Selesai</span>':a.status==='ongoing'?'<span class="badge bo" style="font-size:9px">Berjalan</span>':'<span class="badge bt" style="font-size:9px">Belum</span>';
+    html += '<div style="padding:8px 0;border-bottom:1px dashed var(--p100);display:flex;gap:8px;align-items:start;">';
+    html += '<div style="font-size:12px;font-weight:700;color:var(--p600);width:16px;text-align:center;flex-shrink:0;">' + (i+1) + '.</div>';
+    html += '<div style="flex:1;">';
+    html += '<div style="font-size:12px;font-weight:600;color:var(--tx);">' + a.judul + '</div>';
+    html += '<div style="font-size:10px;color:var(--txh);">' + a.tgl + (a.jamS ? ' \u00b7 ' + a.jamS : '') + (a.jamE ? '-' + a.jamE : '') + '</div>';
+    html += '</div>' + sb + '</div>';
+  });
+  html += '</div>';
+  el.innerHTML = html;
 }
 // ================================================================
 // AKTIVITAS HARIAN
@@ -2949,7 +2961,12 @@ function saveState() {
   if (typeof database !== 'undefined' && !syncDisabled && cloudInitialized) {
      if (lastSavedStateStr !== str) {
         lastSavedStateStr = str;
-        database.ref('foz_dashboard_json_string').set(str).catch(e => console.error("Firebase write error", e));
+        database.ref('foz_dashboard_json_string').set(str)
+          .then(() => {
+             const t = document.getElementById('toast');
+             if(t) { t.innerHTML='<i class="fa-solid fa-cloud-arrow-up"></i> Tersimpan di Cloud'; t.className='toast show'; setTimeout(()=>t.className='toast', 2000); }
+          })
+          .catch(e => console.error("Firebase write error", e));
      }
   }
 }
