@@ -2942,6 +2942,24 @@ function saveState() {
   }
 }
 
+function sanitizeData() {
+  if(!PD) PD = [];
+  if(!PD2) PD2 = [];
+  PD.forEach(p => { if(!p.turunan) p.turunan = []; p.turunan.forEach(t => { if(!t.aktivitas) t.aktivitas = []; }); });
+  PD2.forEach(p => { if(!p.turunan) p.turunan = []; p.turunan.forEach(t => { if(!t.aktivitas) t.aktivitas = []; }); });
+  if(!RD) RD = {b1:[], b2:[]};
+  if(!RD.b1) RD.b1 = [];
+  if(!RD.b2) RD.b2 = [];
+  RD.b1.forEach(r => { if(!r.tasks) r.tasks = []; });
+  RD.b2.forEach(r => { if(!r.tasks) r.tasks = []; });
+  if(!AH) AH = [];
+  if(!PLog) PLog = [];
+  if(!TL) TL = [];
+  if(!CHK) CHK = [];
+  if(!PGurus) PGurus = [];
+  if(!PGurus2) PGurus2 = [];
+}
+
 function loadState() {
   const saved = localStorage.getItem('foz_dashboard_data');
   if(saved) {
@@ -2967,6 +2985,8 @@ function loadState() {
       if(data.CHK) CHK = data.CHK;
       if(data.PGurus) PGurus = data.PGurus;
       if(data.PGurus2) PGurus2 = data.PGurus2;
+
+      sanitizeData();
 
       // Auto-Sync Rencana Pekan dari Aktivitas Harian (Self-Heal)
       if(RD && AH){
@@ -3008,6 +3028,8 @@ function loadState() {
              if(data.CHK) CHK = data.CHK;
              if(data.PGurus) PGurus = data.PGurus;
              if(data.PGurus2) PGurus2 = data.PGurus2;
+             
+             sanitizeData();
              
              lastSavedStateStr = str;
              localStorage.setItem('foz_dashboard_data', str);
