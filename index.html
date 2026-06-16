@@ -804,7 +804,7 @@ let cloudInitialized = false;
     <div class="mtit"><span id="mrtt">Tambah Rencana</span><button class="mcls" onclick="CM('mrc')"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="fg"><label>Program Kerja Utama</label><select id="mr-pu" onchange="buildMrTu()"><option value="">&#8212; Tidak terkait proker &#8212;</option></select></div>
     <div class="fg"><label>Program Turunan</label><select id="mr-tu" onchange="if(typeof buildMrAk === 'function') buildMrAk()"><option value="">&#8212; Pilih &#8212;</option></select></div>
-    <div class="fg"><label>Aktivitas Pendukung</label><select id="mr-ak"><option value="">-- Pilih Aktivitas --</option></select></div>
+    <div class="fg"><label>Aktivitas Pendukung</label><input type="text" id="mr-ak" list="mr-ak-list" placeholder="Pilih atau ketik aktivitas manual..."><datalist id="mr-ak-list"></datalist></div>
     <div class="fg"><label>Judul Rencana <span style="color:var(--r400)">*</span></label><input type="text" id="mr-jd" placeholder="Judul kegiatan pekan ini..."></div>
     <div class="fg"><label>Penanggung Jawab</label><input type="text" id="mr-pj" placeholder="Nama PJ..."></div>
     <div class="fr"><div class="fg"><label>Tanggal Mulai</label><input type="date" id="mr-st"></div><div class="fg"><label>Tanggal Selesai</label><input type="date" id="mr-en"></div></div>
@@ -1068,6 +1068,8 @@ function sEl(id,v){const e=document.getElementById(id);if(e)e.textContent=v;}
 function sPct(id,p){const e=document.getElementById(id);if(e)e.style.width=p+'%';}
 function statsFor(s){let tot=0,dn=0,pt=0,td=0,pl=0;s.forEach(p=>p.turunan.forEach(t=>t.aktivitas.forEach(a=>{tot++;if(a.status==='done')dn++;else if(a.status==='partial'||a.status==='ongoing')pt++;else if(a.status==='todo')td++;else pl++;})));return{tot,dn,pt,td,pl};}
 function turProg(s){let t=0,a=0;s.forEach(p=>p.turunan.forEach(tu=>{t++;if(tu.status==='done')a+=1;else if(tu.status==='partial'||tu.status==='ongoing')a+=0.5;}));return t?Math.round(a/t*100):0;}
+function autoRemoveTLCHK(keyword){if(!keyword||keyword.length<4)return;const kw=keyword.toLowerCase();TL=TL.filter(t=>!t.title.toLowerCase().includes(kw));CHK=CHK.filter(c=>!c.text.toLowerCase().includes(kw));renderTL();renderCHK();}
+function autoUpdateTLCHKName(oldNm, newNm){if(!oldNm||oldNm.length<4||!newNm)return;TL.forEach(t=>{ if(t.title.includes(oldNm)) t.title=t.title.replace(oldNm, newNm); });CHK.forEach(c=>{ if(c.text.includes(oldNm)) c.text=c.text.replace(oldNm, newNm); });renderTL();renderCHK();}
 
 // ================================================================
 // NAVIGATION
@@ -1346,14 +1348,14 @@ function setDefaultPekan(){const now=new Date(),day=now.getDay(),mon=new Date(no
 function buildMrPu(){const s=document.getElementById('mr-pu');s.innerHTML='<option value="">- Tidak terkait proker -</option>';PD.forEach(p=>{const o=document.createElement('option');o.value=p.id;o.textContent='[B1] '+p.nama;s.appendChild(o);});PD2.forEach(p=>{const o=document.createElement('option');o.value=p.id;o.textContent='[B2] '+p.nama;s.appendChild(o);});}
 function buildMrTu(){const pid=document.getElementById('mr-pu').value,s=document.getElementById('mr-tu');s.innerHTML='<option value="">- Pilih -</option>';const p=[...PD,...PD2].find(x=>x.id===pid);if(p)p.turunan.forEach(t=>{addTuOption(s,t);});}
 function buildMrAk(){
-  const pid=document.getElementById('mr-pu').value, tid=document.getElementById('mr-tu').value, s=document.getElementById('mr-ak');
+  const pid=document.getElementById('mr-pu').value, tid=document.getElementById('mr-tu').value, s=document.getElementById('mr-ak-list');
   if(!s) return;
-  s.innerHTML='<option value="">-- Pilih Aktivitas --</option>';
+  s.innerHTML='';
   if(tid) {
     const p=[...PD,...PD2].find(x=>x.id===pid);
     if(p){
       const t=p.turunan.find(x=>x.id===tid);
-      if(t) t.aktivitas.forEach(a=>{const o=document.createElement('option');o.value=a.nama;o.textContent=a.nama;s.appendChild(o);});
+      if(t) t.aktivitas.forEach(a=>{const o=document.createElement('option');o.value=a.nama;s.appendChild(o);});
     }
   }
 }
@@ -1371,7 +1373,7 @@ function openRM(bid,ei=-1){
     document.getElementById('mr-ds').value=r.desc||'';document.getElementById('mr-ss').value=r.status||'todo';
     document.getElementById('mr-ak').value=r.aktivitasPendukung||'';
     RBuf=[...(r.tasks||[])];
-    if(r.puid){document.getElementById('mr-pu').value=r.puid;buildMrTu();setTimeout(()=>{document.getElementById('mr-tu').value=r.tuid||'';if(typeof buildMrAk === 'function') buildMrAk();setTimeout(()=>{const mak=document.getElementById('mr-ak');if(mak && r.aktivitasPendukung){const x=Array.from(mak.options).find(o=>o.value===r.aktivitasPendukung);if(!x){const o=document.createElement('option');o.value=r.aktivitasPendukung;o.textContent=r.aktivitasPendukung;mak.appendChild(o);}mak.value=r.aktivitasPendukung||'';}},60);},60);}
+    if(r.puid){document.getElementById('mr-pu').value=r.puid;buildMrTu();setTimeout(()=>{document.getElementById('mr-tu').value=r.tuid||'';if(typeof buildMrAk === 'function') buildMrAk();setTimeout(()=>{const mak=document.getElementById('mr-ak');if(mak){mak.value=r.aktivitasPendukung||'';}},60);},60);}
   }else{
     document.getElementById('mrtt').textContent='Tambah Rencana - '+lb;
     ['mr-jd','mr-pj','mr-st','mr-en','mr-ds','mr-ak'].forEach(id=>document.getElementById(id).value='');
@@ -1391,6 +1393,7 @@ function autoUpdTurunan(puid,tuid,st,jd,tgl){
     const ex=t.aktivitas.find(a=>a.nama===jd);
     if(ex){ex.status='done';ex.terlaksana=tgl;}else t.aktivitas.push({nama:jd,status:'done',terlaksana:tgl});
     t.status='done';
+    if(typeof autoRemoveTLCHK==='function'){autoRemoveTLCHK(jd);autoRemoveTLCHK(t.nama);}
   }else if(st==='ongoing'&&t.status!=='done'){
     if(!t.aktivitas.find(a=>a.nama===jd))t.aktivitas.push({nama:jd,status:'ongoing',terlaksana:'-'});
     t.status='ongoing';
@@ -1806,8 +1809,10 @@ function submitProker(){
     const tgl=document.getElementById('np-s').value||'-';
     const ex=t.aktivitas.find(a=>a.nama===akt);
     if(ex){ex.status=st;ex.terlaksana=tgl;}else t.aktivitas.push({nama:akt,status:st,terlaksana:tgl});
+    if(st==='done'&&typeof autoRemoveTLCHK==='function') autoRemoveTLCHK(akt);
   }
   t.status=st;
+  if(st==='done'&&typeof autoRemoveTLCHK==='function') autoRemoveTLCHK(t.nama);
   PLog.unshift({type:'new',proker:p.nama,turunan:t.nama,aktivitas:akt,status:st,cat:document.getElementById('np-cat').value,time:new Date().toLocaleString('id-ID')});
   refreshAll();
   toast('Program kerja disimpan & dashboard diperbarui!');
@@ -1827,10 +1832,12 @@ function submitProgress(){
     p.turunan.push(nt);t=nt;document.getElementById('up-tu-new').value='';
   }else{t=p.turunan.find(x=>x.id===tid);if(!t){toast('Pilih program turunan',false);return;}}
   t.status=st;
+  if(st==='done'&&typeof autoRemoveTLCHK==='function') autoRemoveTLCHK(t.nama);
   if(akt){
     const tgl=document.getElementById('up-tgl').value||'-';
     const ex=t.aktivitas.find(a=>a.nama===akt);
     if(ex){ex.status=st;ex.terlaksana=tgl;}else t.aktivitas.push({nama:akt,status:st,terlaksana:tgl});
+    if(st==='done'&&typeof autoRemoveTLCHK==='function') autoRemoveTLCHK(akt);
   }
   PLog.unshift({type:'upd',proker:p.nama,turunan:t.nama,aktivitas:akt,status:st,lap:document.getElementById('up-lap').value,time:new Date().toLocaleString('id-ID')});
   refreshAll();
@@ -2018,9 +2025,11 @@ function admSaveTUName(pid,tid){
   const t=p.turunan.find(x=>x.id===tid);if(!t)return;
   const nm=document.getElementById('tuname-inp-'+tid).value.trim();
   if(!nm){toast('Nama tidak boleh kosong',false);return;}
+  const oldNm=t.nama;
   t.nama=nm;
   const tl=document.getElementById('tutl-inp-'+tid).value.trim();
   t.timeline=tl;
+  if(typeof autoUpdateTLCHKName==='function') autoUpdateTLCHKName(oldNm, nm);
   updateAllAfterPKChange();
   renderAdmPK();
   toast('Program turunan diperbarui!');
@@ -2071,8 +2080,13 @@ function admEditAkt(pid,tid,ai){
   const stChoice=prompt('Status ('+stLabels.join('/')+')\nKetik angka: 0=Direncanakan,1=Belum,2=Berjalan,3=Sebagian,4=Terlaksana\nSekarang: '+stLabels[stCur>=0?stCur:0],stCur>=0?stCur:0);
   if(stChoice===null)return;
   const stIdx=parseInt(stChoice);
+  const oldNm=a.nama;
   a.nama=nm.trim();
-  if(stIdx>=0&&stIdx<stOpts.length)a.status=stOpts[stIdx];
+  if(stIdx>=0&&stIdx<stOpts.length){
+    a.status=stOpts[stIdx];
+    if(a.status==='done'&&typeof autoRemoveTLCHK==='function') autoRemoveTLCHK(a.nama);
+  }
+  if(typeof autoUpdateTLCHKName==='function') autoUpdateTLCHKName(oldNm, a.nama);
   updateAllAfterPKChange();
   renderAdmPK();
   toast('Aktivitas diperbarui!');
