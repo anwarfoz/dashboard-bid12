@@ -206,6 +206,7 @@ const database = firebase.database();
 let isInitialLoad = true;
 let syncDisabled = false;
 let lastSavedStateStr = "";
+let cloudInitialized = false;
 </script>
 </head>
 <body>
@@ -2934,7 +2935,7 @@ function saveState() {
   };
   const str = JSON.stringify(data);
   localStorage.setItem('foz_dashboard_data', str);
-  if (typeof database !== 'undefined' && !syncDisabled) {
+  if (typeof database !== 'undefined' && !syncDisabled && cloudInitialized) {
      if (lastSavedStateStr !== str) {
         lastSavedStateStr = str;
         database.ref('foz_dashboard_json_string').set(str).catch(e => console.error("Firebase write error", e));
@@ -3014,8 +3015,9 @@ function loadState() {
   // Setup Firebase Realtime Listener
   if (typeof database !== 'undefined') {
     database.ref('foz_dashboard_json_string').on('value', (snapshot) => {
+      cloudInitialized = true;
       const str = snapshot.val();
-      if (str) {
+      if (str && str !== lastSavedStateStr) {
          syncDisabled = true;
          try {
              const data = JSON.parse(str);
