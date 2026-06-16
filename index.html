@@ -2937,7 +2937,7 @@ function saveState() {
   if (typeof database !== 'undefined' && !syncDisabled) {
      if (lastSavedStateStr !== str) {
         lastSavedStateStr = str;
-        database.ref('foz_dashboard_data').set(data).catch(e => console.error("Firebase write error", e));
+        database.ref('foz_dashboard_json_string').set(str).catch(e => console.error("Firebase write error", e));
      }
   }
 }
@@ -2993,28 +2993,32 @@ function loadState() {
   
   // Setup Firebase Realtime Listener
   if (typeof database !== 'undefined') {
-    database.ref('foz_dashboard_data').on('value', (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
+    database.ref('foz_dashboard_json_string').on('value', (snapshot) => {
+      const str = snapshot.val();
+      if (str) {
          syncDisabled = true;
-         if(data.PD) PD = data.PD;
-         if(data.PD2) PD2 = data.PD2;
-         if(data.RD) RD = data.RD;
-         if(data.AH) AH = data.AH;
-         if(data.PLog) PLog = data.PLog;
-         if(data.TL) TL = data.TL;
-         if(data.CHK) CHK = data.CHK;
-         if(data.PGurus) PGurus = data.PGurus;
-         if(data.PGurus2) PGurus2 = data.PGurus2;
-         
-         const str = JSON.stringify({PD: PD, PD2: PD2, RD: RD, AH: AH, PLog: PLog, TL: TL, CHK: CHK, PGurus: PGurus, PGurus2: PGurus2});
-         lastSavedStateStr = str;
-         localStorage.setItem('foz_dashboard_data', str);
-         
-         if(document.getElementById('db-content')){
-            refreshAll();
+         try {
+             const data = JSON.parse(str);
+             if(data.PD) PD = data.PD;
+             if(data.PD2) PD2 = data.PD2;
+             if(data.RD) RD = data.RD;
+             if(data.AH) AH = data.AH;
+             if(data.PLog) PLog = data.PLog;
+             if(data.TL) TL = data.TL;
+             if(data.CHK) CHK = data.CHK;
+             if(data.PGurus) PGurus = data.PGurus;
+             if(data.PGurus2) PGurus2 = data.PGurus2;
+             
+             lastSavedStateStr = str;
+             localStorage.setItem('foz_dashboard_data', str);
+             
+             if(document.getElementById('db-content')){
+                refreshAll();
+             }
+             if(!isInitialLoad) toast('<i class="fa-solid fa-cloud-arrow-down"></i> Data tersinkronisasi dari Cloud');
+         } catch(e) {
+             console.error("Firebase parse error", e);
          }
-         if(!isInitialLoad) toast('<i class="fa-solid fa-cloud-arrow-down"></i> Data tersinkronisasi dari Cloud');
          isInitialLoad = false;
          setTimeout(()=>{ syncDisabled = false; }, 500);
       } else {
