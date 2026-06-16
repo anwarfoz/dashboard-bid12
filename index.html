@@ -365,7 +365,7 @@ let cloudInitialized = false;
           <div id="rcprev"></div>
         </div>
         <div class="card" style="margin-bottom:0">
-          <div class="chl"><div><div class="ct">Aktivitas Harian</div><div class="cs">Aktivitas harian yang sudah dikerjakan</div></div><button class="btn bts" onclick="showPage('aktivitas')">Lihat Semua</button></div>
+          <div class="chl"><div><div class="ct">Aktivitas Harian</div><div class="cs">aktivitas yang dilaksanakan/dikerjakan harian dalam 1 pekan</div></div><button class="btn bts" onclick="showPage('aktivitas')">Lihat Semua</button></div>
           <div id="ahprev"></div>
         </div>
       </div>
@@ -2954,22 +2954,23 @@ function saveState() {
   }
 }
 
+function toArr(x) { return Array.isArray(x) ? x : (x && typeof x === 'object' ? Object.values(x) : []); }
 function sanitizeData() {
-  if(!PD) PD = [];
-  if(!PD2) PD2 = [];
-  PD.forEach(p => { if(!p.turunan) p.turunan = []; p.turunan.forEach(t => { if(!t.aktivitas) t.aktivitas = []; }); });
-  PD2.forEach(p => { if(!p.turunan) p.turunan = []; p.turunan.forEach(t => { if(!t.aktivitas) t.aktivitas = []; }); });
+  PD = toArr(PD);
+  PD2 = toArr(PD2);
+  PD.forEach(p => { p.turunan = toArr(p.turunan); p.turunan.forEach(t => { t.aktivitas = toArr(t.aktivitas); }); });
+  PD2.forEach(p => { p.turunan = toArr(p.turunan); p.turunan.forEach(t => { t.aktivitas = toArr(t.aktivitas); }); });
   if(!RD) RD = {b1:[], b2:[]};
-  if(!RD.b1) RD.b1 = [];
-  if(!RD.b2) RD.b2 = [];
-  RD.b1.forEach(r => { if(!r.tasks) r.tasks = []; });
-  RD.b2.forEach(r => { if(!r.tasks) r.tasks = []; });
-  if(!AH) AH = [];
-  if(!PLog) PLog = [];
-  if(!TL) TL = [];
-  if(!CHK) CHK = [];
-  if(!PGurus) PGurus = [];
-  if(!PGurus2) PGurus2 = [];
+  RD.b1 = toArr(RD.b1);
+  RD.b2 = toArr(RD.b2);
+  RD.b1.forEach(r => { r.tasks = toArr(r.tasks); });
+  RD.b2.forEach(r => { r.tasks = toArr(r.tasks); });
+  AH = toArr(AH);
+  PLog = toArr(PLog);
+  TL = toArr(TL);
+  CHK = toArr(CHK);
+  PGurus = toArr(PGurus);
+  PGurus2 = toArr(PGurus2);
 }
 
 function loadState() {
