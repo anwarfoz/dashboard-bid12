@@ -243,8 +243,7 @@ let cloudInitialized = false;
     <div class="ni" onclick="showPage('pengurus-b2')"><i class="fa-solid fa-users"></i> Pengurus</div>
     <div class="ngl" style="margin-top:6px">Admin</div>
     <div class="ni adm" onclick="openAdminPage()"><i class="fa-solid fa-shield-halved"></i> Super Admin <span class="nb nbr" id="nba">&#128274;</span></div>
-    <div class="ni" id="nav-ppt-b1" style="display:none;color:var(--b400)" onclick="exportPPT('b1')"><i class="fa-solid fa-file-powerpoint"></i> Export Laporan PPT B1</div>
-    <div class="ni" id="nav-ppt-b2" style="display:none;color:var(--b400)" onclick="exportPPT('b2')"><i class="fa-solid fa-file-powerpoint"></i> Export Laporan PPT B2</div>
+    <div class="ni" id="nav-excel-all" style="display:none;color:var(--t400)" onclick="exportExcelAll()"><i class="fa-solid fa-file-excel"></i> Export Laporan Excel</div>
   </nav>
   <div class="sb-foot"><span class="xs txh">v2.1 (Sync) - 2026</span><button class="tbtn" onclick="toggleTheme()"><i class="fa-solid fa-moon"></i> Mode</button></div>
 </aside>
@@ -364,6 +363,10 @@ let cloudInitialized = false;
           <div class="chl"><div><div class="ct">Rencana Kerja Pekan Ini</div><div class="cs" id="pekan-periode-preview"></div></div><button class="btn bts" onclick="showPage('rencana')">Lihat Semua</button></div>
           <div id="rcprev"></div>
         </div>
+        <div class="card" style="margin-top:14px;margin-bottom:0">
+          <div class="chl"><div><div class="ct">Aktivitas Harian Terbaru</div></div><button class="btn bts" onclick="showPage('aktivitas')">Lihat Semua</button></div>
+          <div id="ahprev"></div>
+        </div>
       </div>
       <div class="g2">
         <div class="card" style="margin-bottom:0"><div class="chl"><div class="ct">Action Plan &amp; Timeline</div><button class="btn bts btA" id="betl" onclick="openAdminModal('timeline')" style="display:none"><i class="fa-solid fa-pen"></i> Edit</button></div><div id="tllist"></div></div>
@@ -388,7 +391,10 @@ let cloudInitialized = false;
     <div class="page" id="page-rencana">
       <div class="st">Rencana Kerja Pekan Ini</div>
       <div class="card" style="padding:12px 16px">
-        <div class="flex ac gap8 jb"><div><div class="ct" style="font-size:12px">Periode Pekan Berjalan</div><div class="flex ac gap8 mt6"><div class="fg" style="margin:0;flex:1"><input type="date" id="pekan-start" onchange="updatePeriode()"></div><span class="xs txh">s/d</span><div class="fg" style="margin:0;flex:1"><input type="date" id="pekan-end" onchange="updatePeriode()"></div></div></div><div id="pekan-badge-wrap"></div></div>
+        <div class="flex ac gap8 jb">
+          <div><div class="ct" style="font-size:12px">Periode Pekan Berjalan</div><div class="flex ac gap8 mt6"><div class="fg" style="margin:0;flex:1"><input type="date" id="pekan-start" onchange="updatePeriode()"></div><span class="xs txh">s/d</span><div class="fg" style="margin:0;flex:1"><input type="date" id="pekan-end" onchange="updatePeriode()"></div></div></div>
+          <div class="flex gap8 ac"><div id="pekan-badge-wrap"></div><button class="btn bts" style="background:var(--g50);color:var(--g800);border-color:var(--g100)" onclick="downloadRCExcel()"><i class="fa-solid fa-file-excel"></i> Download Excel</button></div>
+        </div>
       </div>
       <div class="g2">
         <div class="card"><div class="chl"><div class="ct"><i class="fa-solid fa-circle" style="color:var(--t400);font-size:8px;margin-right:5px"></i>Bidang 1 - SDM</div><button class="btn bts btP" onclick="openRM('b1')"><i class="fa-solid fa-plus"></i> Tambah</button></div><div id="rcb1"><div style="color:var(--txh);font-size:12px;text-align:center;padding:14px 0">Belum ada rencana Bidang 1</div></div></div>
@@ -803,7 +809,7 @@ let cloudInitialized = false;
   <div class="modal">
     <div class="mtit"><span id="mrtt">Tambah Rencana</span><button class="mcls" onclick="CM('mrc')"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="fg"><label>Program Kerja Utama</label><select id="mr-pu" onchange="buildMrTu()"><option value="">&#8212; Tidak terkait proker &#8212;</option></select></div>
-    <div class="fg"><label>Program Turunan</label><select id="mr-tu" onchange="if(typeof buildMrAk === 'function') buildMrAk()"><option value="">&#8212; Pilih &#8212;</option></select></div>
+    <div class="fg"><label>Program Turunan</label><select id="mr-tu" onchange="chgMrTu()"><option value="">&#8212; Pilih &#8212;</option></select><input type="text" id="mr-tu-new" placeholder="Ketik program turunan baru..." style="display:none;margin-top:5px;"></div>
     <div class="fg"><label>Aktivitas Pendukung</label><input type="text" id="mr-ak" list="mr-ak-list" placeholder="Pilih atau ketik aktivitas manual..."><datalist id="mr-ak-list"></datalist></div>
     <div class="fg"><label>Judul Rencana <span style="color:var(--r400)">*</span></label><input type="text" id="mr-jd" placeholder="Judul kegiatan pekan ini..."></div>
     <div class="fg"><label>Penanggung Jawab</label><input type="text" id="mr-pj" placeholder="Nama PJ..."></div>
@@ -1089,8 +1095,8 @@ function showPage(id){
 // ADMIN
 // ================================================================
 function openAdminPage(){if(isAdm){showPage('admin');return}document.getElementById('apass').value='';document.getElementById('lerr').style.display='none';document.getElementById('alog').style.display='flex'}
-function doLogin(){if(document.getElementById('apass').value===APW){isAdm=true;document.getElementById('alog').style.display='none';document.getElementById('abar').classList.add('on');document.getElementById('admbadge').style.display='flex';document.getElementById('nba').textContent='\u2713';['betl','bechk','nav-rencana','nav-aktivitas','nav-input','btn-tambah-proker','nav-ppt-b1','nav-ppt-b2'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='';});const pm=document.getElementById('pm-text');if(pm)pm.style.display='none';showPage('admin');toast('Mode Super Admin aktif!');}else document.getElementById('lerr').style.display='block'}
-function logoutAdmin(){isAdm=false;document.getElementById('abar').classList.remove('on');document.getElementById('admbadge').style.display='none';['betl','bechk','nav-rencana','nav-aktivitas','nav-input','btn-tambah-proker','nav-ppt-b1','nav-ppt-b2'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='none';});const pm=document.getElementById('pm-text');if(pm)pm.style.display='';document.getElementById('nba').textContent='\uD83D\uDD12';showPage('beranda');toast('Logout berhasil');}
+function doLogin(){if(document.getElementById('apass').value===APW){isAdm=true;document.getElementById('alog').style.display='none';document.getElementById('abar').classList.add('on');document.getElementById('admbadge').style.display='flex';document.getElementById('nba').textContent='\u2713';['betl','bechk','nav-rencana','nav-aktivitas','nav-input','btn-tambah-proker','nav-excel-all'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='';});const pm=document.getElementById('pm-text');if(pm)pm.style.display='none';showPage('admin');toast('Mode Super Admin aktif!');}else document.getElementById('lerr').style.display='block'}
+function logoutAdmin(){isAdm=false;document.getElementById('abar').classList.remove('on');document.getElementById('admbadge').style.display='none';['betl','bechk','nav-rencana','nav-aktivitas','nav-input','btn-tambah-proker','nav-excel-all'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='none';});const pm=document.getElementById('pm-text');if(pm)pm.style.display='';document.getElementById('nba').textContent='\uD83D\uDD12';showPage('beranda');toast('Logout berhasil');}
 function openAdminModal(sec){if(!isAdm){toast('Perlu login admin',false);return}document.getElementById('mat').textContent=sec==='timeline'?'Edit Action Plan':'Edit Checklist';document.getElementById('mab').innerHTML=sec==='timeline'?buildTLF():buildCHKF();document.getElementById('mam').classList.add('on');}
 function buildTLF(){return'<div id="atll2">'+TL.map(t=>`<div class="arow" id="atr-${t.id}"><input class="ei" style="flex:2" value="${esc(t.title)}" id="att-${t.id}"><input class="ei" style="width:100px" value="${esc(t.date)}" id="atd-${t.id}"><select class="ei" style="width:80px" id="atp-${t.id}"><option value="high" ${t.prio==='high'?'selected':''}>Urgent</option><option value="med" ${t.prio==='med'?'selected':''}>Sedang</option><option value="low" ${t.prio==='low'?'selected':''}>Rendah</option></select><button class="btn bts btD" onclick="delTL(${t.id})"><i class="fa-solid fa-trash"></i></button></div>`).join('')+'</div><div class="flex gap6 mt8"><input class="ei" id="annt" style="flex:2" placeholder="Judul baru..."><input class="ei" id="annd" style="width:100px" placeholder="Tanggal..."><select class="ei" id="annp" style="width:80px"><option value="high">Urgent</option><option value="med" selected>Sedang</option><option value="low">Rendah</option></select><button class="btn bts btP" onclick="addTLI()"><i class="fa-solid fa-plus"></i></button></div><div class="flex gap8 mt12" style="justify-content:flex-end"><button class="btn" onclick="CM(\'mam\')">Batal</button><button class="btn btA" onclick="saveTL()"><i class="fa-solid fa-floppy-disk"></i> Simpan</button></div>';}
 function buildCHKF(){return'<div id="achkl2">'+CHK.map(c=>`<div class="arow" id="acr-${c.id}"><input class="ei" style="flex:2" value="${esc(c.text)}" id="act-${c.id}"><select class="ei" style="width:80px" id="acp-${c.id}"><option value="high" ${c.prio==='high'?'selected':''}>Urgent</option><option value="med" ${c.prio==='med'?'selected':''}>Sedang</option><option value="low" ${c.prio==='low'?'selected':''}>Rendah</option></select><button class="btn bts btD" onclick="delCHKa(${c.id})"><i class="fa-solid fa-trash"></i></button></div>`).join('')+'</div><div class="flex gap6 mt8"><input class="ei" id="acnt" style="flex:2" placeholder="Tugas baru..."><select class="ei" id="acnp" style="width:80px"><option value="high">Urgent</option><option value="med" selected>Sedang</option><option value="low">Rendah</option></select><button class="btn bts btP" onclick="addCHKI()"><i class="fa-solid fa-plus"></i></button></div><div class="flex gap8 mt12" style="justify-content:flex-end"><button class="btn" onclick="CM(\'mam\')">Batal</button><button class="btn btA" onclick="saveCHK()"><i class="fa-solid fa-floppy-disk"></i> Simpan</button></div>';}
@@ -1346,7 +1352,8 @@ function setDefaultPekan(){const now=new Date(),day=now.getDay(),mon=new Date(no
 // RENCANA PEKAN
 // ================================================================
 function buildMrPu(){const s=document.getElementById('mr-pu');s.innerHTML='<option value="">- Tidak terkait proker -</option>';PD.forEach(p=>{const o=document.createElement('option');o.value=p.id;o.textContent='[B1] '+p.nama;s.appendChild(o);});PD2.forEach(p=>{const o=document.createElement('option');o.value=p.id;o.textContent='[B2] '+p.nama;s.appendChild(o);});}
-function buildMrTu(){const pid=document.getElementById('mr-pu').value,s=document.getElementById('mr-tu');s.innerHTML='<option value="">- Pilih -</option>';const p=[...PD,...PD2].find(x=>x.id===pid);if(p)p.turunan.forEach(t=>{addTuOption(s,t);});}
+function buildMrTu(){const pid=document.getElementById('mr-pu').value,s=document.getElementById('mr-tu');s.innerHTML='<option value="">- Pilih -</option>';const p=[...PD,...PD2].find(x=>x.id===pid);if(p){p.turunan.forEach(t=>{addTuOption(s,t);});const onew=document.createElement('option');onew.value='new';onew.style.color='var(--t600)';onew.style.fontWeight='600';onew.textContent='+ Tambah Baru';s.appendChild(onew);}chgMrTu();}
+function chgMrTu(){const val=document.getElementById('mr-tu').value;const inNew=document.getElementById('mr-tu-new');if(inNew)inNew.style.display=(val==='new')?'block':'none';if(typeof buildMrAk==='function')buildMrAk();}
 function buildMrAk(){
   const pid=document.getElementById('mr-pu').value, tid=document.getElementById('mr-tu').value, s=document.getElementById('mr-ak-list');
   if(!s) return;
@@ -1407,8 +1414,17 @@ function saveRencana(){
   const bid=document.getElementById('mr-bid').value;
   const jd=document.getElementById('mr-jd').value.trim();
   if(!jd){toast('Judul tidak boleh kosong',false);return;}
-  const puid=document.getElementById('mr-pu').value,tuid=document.getElementById('mr-tu').value;
-  const p=[...PD,...PD2].find(x=>x.id===puid),t=p?p.turunan.find(x=>x.id===tuid):null;
+  const puid=document.getElementById('mr-pu').value;
+  let tuid=document.getElementById('mr-tu').value;
+  const p=[...PD,...PD2].find(x=>x.id===puid);
+  if(tuid==='new'){
+    const newName=document.getElementById('mr-tu-new').value.trim();
+    if(newName&&p){
+      tuid='tu_'+Date.now();
+      p.turunan.push({id:tuid,nama:newName,status:'todo',timeline:'',aktivitas:[]});
+    }else{tuid='';}
+  }
+  const t=p?p.turunan.find(x=>x.id===tuid):null;
   const newSt=document.getElementById('mr-ss').value;
   const tgl=document.getElementById('mr-en').value||document.getElementById('mr-st').value||new Date().toLocaleDateString('id-ID');
   const item={id:rSeq++,judul:jd,pj:document.getElementById('mr-pj').value,start:document.getElementById('mr-st').value,end:document.getElementById('mr-en').value,desc:document.getElementById('mr-ds').value,status:newSt,aktivitasPendukung:document.getElementById('mr-ak').value,tasks:[...RBuf],bid,puid,tuid,pnama:p?p.nama:'',tnama:t?t.nama:'',created:new Date().toLocaleDateString('id-ID')};
@@ -1467,12 +1483,48 @@ function renderRC(){
   document.getElementById('nbr').textContent=RD.b1.length+RD.b2.length;
 }
 
+function getWeekRange(){
+  const now=new Date();
+  const day=now.getDay(); // 0=Sun,1=Mon,...
+  const mon=new Date(now); mon.setDate(now.getDate()-(day===0?6:day-1)); mon.setHours(0,0,0,0);
+  const sun=new Date(mon); sun.setDate(mon.getDate()+6); sun.setHours(23,59,59,999);
+  return{mon,sun};
+}
+function isInCurrentWeek(r){
+  const{mon,sun}=getWeekRange();
+  // Cek apakah tanggal start atau end rencana berada di dalam pekan ini
+  const s=r.start?new Date(r.start+'T00:00:00'):null;
+  const e=r.end?new Date(r.end+'T23:59:59'):null;
+  if(s&&s>=mon&&s<=sun) return true;
+  if(e&&e>=mon&&e<=sun) return true;
+  if(s&&e&&s<=mon&&e>=sun) return true; // rentang mencakup pekan ini
+  return false;
+}
 function updRCPrev(){
   const el=document.getElementById('rcprev');if(!el)return;
-  const rc1 = RD.b1.filter(r=>r.status!=='done');
-  const rc2 = RD.b2.filter(r=>r.status!=='done');
+  // Tampilkan: semua yang belum selesai + yang selesai tapi masih dalam pekan berjalan
+  const filterRC=(arr)=>arr.filter(r=>r.status!=='done'||isInCurrentWeek(r));
+  const rc1=filterRC(RD.b1), rc2=filterRC(RD.b2);
   if(!rc1.length&&!rc2.length){el.innerHTML='<div style="color:var(--txh);font-size:12px;text-align:center;padding:16px 0"><i class="fa-regular fa-calendar-xmark" style="font-size:22px;margin-bottom:5px;display:block"></i>Belum ada rencana pekan.</div>';return;}
-  el.innerHTML='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;align-items:start;">'+['b1','b2'].map(b=>{const col=b==='b1'?'t':'b',it=RD[b].filter(r=>r.status!=='done');return`<div style="background:var(--${col}50);border:1px solid var(--${col}100);border-radius:10px;padding:14px;display:flex;flex-direction:column;height:100%;"><div class="xs fw6" style="color:var(--${col}800);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px;display:flex"><i class="fa-solid fa-layer-group" style="margin-right:5px;margin-top:2px"></i><div style="display:flex"><span style="white-space:nowrap;margin-right:4px">Bidang ${b==='b1'?'1 -':'2 -'}</span><span>${b==='b1'?'Pengembangan SDM':'Penguatan Kelembagaan'}</span></div></div>${it.length?it.slice(0,4).map((r,i)=>{const sb=r.status==='done'?'<span class="badge bd" style="font-size:9px">Selesai</span>':r.status==='ongoing'?'<span class="badge bo" style="font-size:9px">Berjalan</span>':'<span class="badge bt" style="font-size:9px">Belum</span>';return`<div style="padding:6px 0;border-bottom:1px dashed var(--${col}100)"><div class="flex gap8"><div style="font-size:12px;font-weight:700;color:var(--${col}600);width:16px;text-align:center;flex-shrink:0;margin-top:1px">${i+1}.</div><div style="flex:1"><div style="font-size:12px;font-weight:600;color:var(--tx)">${r.judul}</div>${r.tnama?`<div style="font-size:10px;color:var(--txh)">${r.tnama}</div>`:''}</div>${sb}</div></div>`;}).join(''):`<div class="xs txh" style="padding:6px 0;flex:1">Belum ada rencana pekan ini.</div>`}</div>`;}).join('')+'</div>';
+  el.innerHTML='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;align-items:start;">'+['b1','b2'].map(b=>{
+    const col=b==='b1'?'t':'b', it=filterRC(RD[b]);
+    return`<div style="background:var(--${col}50);border:1px solid var(--${col}100);border-radius:10px;padding:14px;display:flex;flex-direction:column;height:100%;">
+      <div class="xs fw6" style="color:var(--${col}800);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px;display:flex"><i class="fa-solid fa-layer-group" style="margin-right:5px;margin-top:2px"></i><div style="display:flex"><span style="white-space:nowrap;margin-right:4px">Bidang ${b==='b1'?'1 -':'2 -'}</span><span>${b==='b1'?'Pengembangan SDM':'Penguatan Kelembagaan'}</span></div></div>
+      ${it.length?it.slice(0,6).map((r,i)=>{
+        const isDone=r.status==='done';
+        const sb=isDone?'<span class="badge bd" style="font-size:9px">Selesai</span>':r.status==='ongoing'?'<span class="badge bo" style="font-size:9px">Berjalan</span>':'<span class="badge bt" style="font-size:9px">Belum</span>';
+        return`<div style="padding:6px 0;border-bottom:1px dashed var(--${col}100);${isDone?'opacity:0.55':''}">
+          <div class="flex gap8">
+            <div style="font-size:12px;font-weight:700;color:var(--${col}600);width:16px;text-align:center;flex-shrink:0;margin-top:1px">${i+1}.</div>
+            <div style="flex:1">
+              <div style="font-size:12px;font-weight:600;color:var(--tx);${isDone?'text-decoration:line-through':''}">${r.judul}</div>
+              ${r.tnama?`<div style="font-size:10px;color:var(--txh);${isDone?'text-decoration:line-through':''}">${r.tnama}</div>`:''}
+            </div>${sb}
+          </div>
+        </div>`;
+      }).join(''):`<div class="xs txh" style="padding:6px 0;flex:1">Belum ada rencana pekan ini.</div>`}
+    </div>`;
+  }).join('')+'</div>';
 }
 function updAHPrev(){
   const el=document.getElementById('ahprev');if(!el)return;
@@ -1716,6 +1768,21 @@ function downloadAHExcel(){
   a.download='Laporan_Aktivitas_FOZ_'+now.getFullYear()+(now.getMonth()+1).toString().padStart(2,'0')+now.getDate().toString().padStart(2,'0')+'.csv';
   a.click();URL.revokeObjectURL(url);
   toast('Laporan diunduh ('+items.length+' aktivitas)');
+}
+function downloadRCExcel(){
+  const rows=[['No','Bidang','Judul Rencana','Program Utama','Program Turunan','Aktivitas Pendukung','Status','Mulai','Selesai','Penanggung Jawab','Deskripsi']];
+  const stM={done:'Selesai',ongoing:'Berjalan',todo:'Belum'};
+  let idx=1;
+  [...RD.b1,...RD.b2].forEach(r=>{
+    rows.push([idx++, r.bid==='b1'?'Bidang 1 - SDM':'Bidang 2 - Kelembagaan', r.judul||'', r.pnama||'', r.tnama||'', r.aktivitasPendukung||'', stM[r.status]||r.status||'', r.start||'', r.end||'', r.pj||'', r.desc||'']);
+  });
+  const csv=rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);const a=document.createElement('a');
+  const now=new Date();a.href=url;
+  a.download='Laporan_Rencana_Pekan_FOZ_'+now.getFullYear()+(now.getMonth()+1).toString().padStart(2,'0')+now.getDate().toString().padStart(2,'0')+'.csv';
+  a.click();URL.revokeObjectURL(url);
+  toast('Laporan Rencana diunduh ('+(RD.b1.length+RD.b2.length)+' item)');
 }
 
 // ================================================================
@@ -2892,6 +2959,38 @@ function dlCSV(rows,fname){
 function st2txt(s){
   const m={done:'Selesai',partial:'Sebagian',todo:'Belum',planned:'Direncanakan',ongoing:'Berjalan'};
   return m[s]||'-';
+}
+
+function exportExcelAll() {
+  const rows = [['Bidang', 'Nama Program Utama', 'Status Proker', 'Nama Program Turunan', 'Status Turunan', 'Timeline']];
+  const stM = {done:'Selesai', partial:'Sebagian', ongoing:'Berjalan', planned:'Direncanakan', todo:'Belum'};
+  const addData = (bid, pdArray) => {
+    pdArray.forEach(p => {
+      let pStatus = 'todo';
+      if (p.turunan && p.turunan.length > 0) {
+        if (p.turunan.every(t => t.status === 'done')) pStatus = 'done';
+        else if (p.turunan.some(t => t.status === 'done' || t.status === 'ongoing' || t.status === 'partial')) pStatus = 'ongoing';
+      }
+      if (!p.turunan || p.turunan.length === 0) {
+        rows.push([bid, p.nama, stM[pStatus]||pStatus, '-', '-', '-']);
+      } else {
+        p.turunan.forEach(t => {
+          rows.push([bid, p.nama, stM[pStatus]||pStatus, t.nama, stM[t.status]||t.status, t.timeline||'-']);
+        });
+      }
+    });
+  };
+  addData('Bidang 1 - SDM', PD);
+  addData('Bidang 2 - Kelembagaan', PD2);
+  const csv=rows.map(r=>r.map(c=>'"'+String(c||'').replace(/"/g,'""')+'"').join(',')).join('\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;
+  const now=new Date();
+  a.download='Laporan_Seluruh_Program_Kerja_FOZ_'+now.getFullYear()+(now.getMonth()+1).toString().padStart(2,'0')+now.getDate().toString().padStart(2,'0')+'.csv';
+  document.body.appendChild(a);a.click();
+  document.body.removeChild(a);URL.revokeObjectURL(url);
+  toast('Laporan Excel berhasil diunduh!');
 }
 
 function exportPPT(bidang) {
